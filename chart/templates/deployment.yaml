@@ -249,9 +249,21 @@ spec:
         name: {{ template "rancher.name" . }}-audit-log
         command: ["tail"]
         args: ["-F", "/var/log/auditlog/rancher-api-audit.log"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
         - mountPath: /var/log/auditlog
           name: audit-log
+          readOnly: true
         {{- if .Values.auditLog.resources }}
         resources: {{- toYaml .Values.auditLog.resources | nindent 10 }}
         {{- end }}
