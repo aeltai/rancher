@@ -121,6 +121,33 @@ tests:
   - equal:
       path: spec.template.spec.containers[1].imagePullPolicy
       value: Never
+- it: should run audit log sidecar as non-root
+  set:
+    auditLog:
+      enabled: true
+      destination: sidecar
+  asserts:
+  - equal:
+      path: spec.template.spec.containers[1].securityContext.runAsNonRoot
+      value: true
+  - equal:
+      path: spec.template.spec.containers[1].securityContext.runAsUser
+      value: 65534
+  - equal:
+      path: spec.template.spec.containers[1].securityContext.runAsGroup
+      value: 65534
+  - equal:
+      path: spec.template.spec.containers[1].securityContext.readOnlyRootFilesystem
+      value: true
+  - equal:
+      path: spec.template.spec.containers[1].volumeMounts[0].readOnly
+      value: true
+  - equal:
+      path: spec.template.spec.containers[1].command
+      value: ["sh", "-c"]
+  - contains:
+      path: spec.template.spec.containers[1].args[0]
+      content: "tail -F /var/log/auditlog/rancher-api-audit.log"
 - it: should not have command arg "--no-cacerts" when using private CA
   set:
     privateCA: "true"
