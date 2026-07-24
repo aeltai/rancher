@@ -68,7 +68,6 @@ import (
 	"github.com/rancher/wrangler/v3/pkg/unstructured"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	"gopkg.in/natefinch/lumberjack.v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -340,12 +339,16 @@ func New(ctx context.Context, clientConfg clientcmd.ClientConfig, opts *Options)
 	var auditLogWriter *audit.Writer
 
 	if opts.AuditLogEnabled {
-		out := &lumberjack.Logger{
-			Filename:   opts.AuditLogPath,
-			MaxAge:     opts.AuditLogMaxage,
-			MaxBackups: opts.AuditLogMaxbackup,
-			MaxSize:    opts.AuditLogMaxsize,
+		if err := prepareAuditLogPath(opts.AuditLogPath); err != nil {
+			return nil, fmt.Errorf("failed to prepare audit log path: %w", err)
 		}
+
+		out := newSidecarReadableAuditLog(
+			opts.AuditLogPath,
+			opts.AuditLogMaxage,
+			opts.AuditLogMaxbackup,
+			opts.AuditLogMaxsize,
+		)
 		defer out.Close()
 
 		auditLogWriter, err = audit.NewWriter(out, audit.WriterOptions{

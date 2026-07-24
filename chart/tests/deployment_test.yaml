@@ -142,6 +142,12 @@ tests:
   - equal:
       path: spec.template.spec.containers[1].volumeMounts[0].readOnly
       value: true
+  - equal:
+      path: spec.template.spec.containers[1].command
+      value: ["sh", "-c"]
+  - contains:
+      path: spec.template.spec.containers[1].args[0]
+      content: "tail -F /var/log/auditlog/rancher-api-audit.log"
 - it: should not have command arg "--no-cacerts" when using private CA
   set:
     privateCA: "true"
